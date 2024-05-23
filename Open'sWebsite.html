@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open's HTML GAMES!!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1em 0;
+        }
+        nav {
+            background-color: #333;
+            overflow: hidden;
+        }
+        nav a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+        nav a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        main {
+            padding: 1em;
+        }
+        #game-container {
+            text-align: center;
+            margin: auto;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Open's HTML GAMES!!</h1>
+    </header>
+    <nav>
+        <a href="#">Home</a>
+        <a href="#snake-game">3D Snake Game</a>
+        <!-- Add more links here for other games -->
+    </nav>
+    <main>
+        <section id="snake-game">
+            <h2>3D Snake Game</h2>
+            <div id="game-container"></div>
+        </section>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let snake = [];
+        let food;
+        let gridSize = 20;
+        let unitSize = 1;
+        let direction = new THREE.Vector3(1, 0, 0); // Start moving along the X-axis
+        let clock = new THREE.Clock();
+        let moveDelay = 0.2; // Time between moves in seconds
+        let lastMoveTime = 0;
+
+        // Initialize the scene
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('game-container').appendChild(renderer.domElement);
+
+            // Set up the snake
+            for (let i = 0; i < 3; i++) {
+                let segment = createSegment();
+                segment.position.set(i * unitSize, 0, 0);
+                snake.push(segment);
+                scene.add(segment);
+            }
+
+            // Set up the food
+            food = createSegment(0xff0000); // Red color for food
+            placeFood();
+            scene.add(food);
+
+            camera.position.z = 10;
+
+            animate();
+        }
+
+        function createSegment(color = 0x00ff00) {
+            let geometry = new THREE.BoxGeometry(unitSize, unitSize, unitSize);
+            let material = new THREE.MeshBasicMaterial({ color: color });
+            return new THREE.Mesh(geometry, material);
+        }
+
+        function placeFood() {
+            let x = Math.floor(Math.random() * gridSize) - gridSize / 2;
+            let y = Math.floor(Math.random() * gridSize) - gridSize / 2;
+            food.position.set(x * unitSize, y * unitSize, 0);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            let elapsedTime = clock.getElapsedTime();
+            if (elapsedTime - lastMoveTime > moveDelay) {
+                moveSnake();
+                lastMoveTime = elapsedTime;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function moveSnake() {
+            let newHead = snake[0].clone();
+            newHead.position.add(direction.clone().multiplyScalar(unitSize));
+            
+            // Check for collision with food
+            if (newHead.position.distanceTo(food.position) < 0.1) {
+                snake.unshift(newHead);
+                scene.add(newHead);
+                placeFood();
+            } else {
+                let tail = snake.pop();
+                tail.position.copy(newHead.position);
+                snake.unshift(tail);
+            }
+        }
+
+        // Handle keyboard input for movement
+        document.addEventListener('keydown', (event) => {
+            switch (event.code) {
+                case 'ArrowUp':
+                    if (direction.y === 0) direction.set(0, 1, 0);
+                    break;
+                case 'ArrowDown':
+                    if (direction.y === 0) direction.set(0, -1, 0);
+                    break;
+                case 'ArrowLeft':
+                    if (direction.x === 0) direction.set(-1, 0, 0);
+                    break;
+                case 'ArrowRight':
+                    if (direction.x === 0) direction.set(1, 0, 0);
+                    break;
+            }
+        });
+
+        // Handle touch events for mobile controls
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', (event) => {
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        });
+
+        document.addEventListener('touchend', (event) => {
+            let touchEndX = event.changedTouches[0].screenX;
+            let touchEndY = event.changedTouches[0].screenY;
+            handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+        });
+
+        function handleSwipe(startX, startY, endX, endY) {
+            let deltaX = endX - startX;
+            let deltaY = endY - startY;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (deltaX > 0 && direction.x === 0) {
+                    direction.set(1, 0, 0);
+                } else if (deltaX < 0 && direction.x === 0) {
+                    direction.set(-1, 0, 0);
+                }
+            } else {
+                if (deltaY > 0 && direction.y === 0) {
+                    direction.set(0, 1, 0);
+                } else if (deltaY < 0 && direction.y === 0) {
+                    direction.set(0, -1, 0);
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
