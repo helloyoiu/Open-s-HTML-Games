@@ -1,0 +1,3 @@
+Hello, welcome to my HTML games. i do hope you like them.
+
+PLEASE NOTE THAT THESE GAMES WON'T BE AS GOOD BECAUSE THEY'RE BEING MADE WITH HTML. I TRY MY HARDEST!
